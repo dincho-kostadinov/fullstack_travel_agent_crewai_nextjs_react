@@ -1,17 +1,13 @@
 research_task:
   description: >
-    Conduct a thorough research about {topic}
-    Make sure you find any interesting and relevant information given
-    the current year is {current_year}.
+    Research and find the best hotel offers available in {city}. Gather up-to-date information on prices, amenities, locations, and special deals for travelers.
   expected_output: >
-    A list with 10 bullet points of the most relevant information about {topic}
-  agent: researcher
+    A list of 10 bullet points highlighting the most relevant hotel offers, including hotel names, prices, amenities, and any special deals in {city}.
+  agent: travel_agent
 
 reporting_task:
   description: >
-    Review the context you got and expand each topic into a full section for a report.
-    Make sure the report is detailed and contains any and all relevant information.
+    Analyze the research findings and select the 3 best hotel offers based on relevance, value, and user needs. Clearly present these options to the user, including hotel names, prices, amenities, and reasons for selection.
   expected_output: >
-    A fully fledged report with the main topics, each with a full section of information.
-    Formatted as markdown without '```'
+    A markdown-formatted summary listing the top 3 hotel offers, each with a brief explanation of why it was chosen, including hotel name, price, amenities, and any special deals.
   agent: reporting_analyst
