@@ -8,7 +8,7 @@ from travel_agent_crewai.crew import TravelCrew
 
 app = FastAPI()
 
-origins = ["http://localhost", "http://localhost:3000"]
+origins = ["http://localhost", "http://localhost:3000","http://localhost:3001"]
 
 app.add_middleware(
     CORSMiddleware,
