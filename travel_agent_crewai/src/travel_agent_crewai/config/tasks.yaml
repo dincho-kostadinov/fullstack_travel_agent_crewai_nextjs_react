@@ -1,57 +1,111 @@
 research_task:
   name: "Research Hotels in {{city}}"
-  description: "Find and list exactly 10 hotels in {{city}} that are available for booking from {{start_date}} to {{end_date}} for {{people}} people."
-  agent: "travel_agent"
+  description: "Find exactly 10 potential hotels in {{city}} for {{start_date}} to {{end_date}} for {{people}} people."
+  agent: "travel_research_agent"
   prompt_template: |
-    Your task is to find exactly 10 hotels in {{city}} that are available for booking from {{start_date}} to {{end_date}} for {{people}} people.
-    Only include hotels that have availability for the full date range.
-    For each hotel, provide:
-    - Name of the hotel
-    - A brief description focusing on amenities and location
-    - Available pricing or price range for the specified dates
-    - Direct booking or reservation link with preselected dates and number of people.
-    Use the Serper search tool to gather the latest and most relevant information from reputable booking sites.
-    Respond ONLY with a JSON object like this:
-
+    Identify exactly 10 potential hotels in {{city}} for {{start_date}} to {{end_date}} for {{people}} people.
+    Do not guarantee availability — this will be verified later.
+    For each hotel, include:
+      - name: Name of the hotel
+      - description: Brief summary of key amenities and location
+      - price_range: Estimated cost per night for given dates
+      - rating: Average review score out of 5
+      - review_count: Number of reviews
+      - booking_link(required): Direct booking link with preselected dates and number of people. Must be a valid URL.
+    Use reputable booking sites and travel data sources.
+    Respond ONLY with:
     {
       "hotels": [
         {
           "name": "Hotel Example",
           "description": "A nice hotel located downtown with free WiFi.",
           "price_range": "$100-$150 per night",
+          "rating": 4.5,
+          "review_count": 230,
           "booking_link": "https://example.com/hotel-booking"
         }
       ]
     }
   expected_output: |
-    A JSON object containing exactly 10 hotels with all requested details.
+    ONLY JSON object containing exactly 10 hotels with all requested details(booking_link is required).
+
+availability_check_task:
+  name: "Check Hotel Availability"
+  description: "Verify real-time availability of the 10 hotels in {{city}} for {{start_date}} to {{end_date}} for {{people}} people."
+  agent: "travel_availability_checker_agent"
+  prompt_template: |
+    Verify the real-time availability of each hotel provided in the research results for {{city}} from {{start_date}} to {{end_date}} for {{people}} people.
+    Keep all fields from the research results, and add:
+      - available: true/false
+      - last_checked: ISO datetime string of when availability was confirmed
+    If a hotel is unavailable, mark available as false.
+    Respond ONLY with:
+    {
+      "hotels": [
+        {
+          "name": "Hotel Example",
+          "description": "A nice hotel located downtown with free WiFi.",
+          "price_range": "$100-$150 per night",
+          "rating": 4.5,
+          "review_count": 230,
+          "booking_link": "https://example.com/hotel-booking",
+          "available": true,
+          "last_checked": "2025-08-12T10:32:00Z"
+        }
+      ]
+    }
+  expected_output: |
+    JSON object containing the same hotels with added availability and last_checked fields.
 
 reporting_task:
-  name: "Reporting"
-  description: "Summarize and filter the top hotels in {{city}} for the period {{start_date}} to {{end_date}} for {{people}} people."
-  agent: "reporting_analyst"
+  name: "Summarize Top Hotels"
+  description: "Select the top up to 5 available hotels in {{city}} for {{start_date}} to {{end_date}} for {{people}} people and provide a summary."
+  agent: "travel_reporting_agent"
   prompt_template: |
-    Based on the travel agent’s research for {{city}} from {{start_date}} to {{end_date}} for {{people}} people, select the 5 best hotels considering:
-    - Price and overall value
-    - Location and amenities
-    - User reviews and ratings
-    - Confirmed availability for the entire period
-    Then, provide:
-    - A summary paragraph highlighting why these hotels are the best choices
-    - The full JSON list of the selected 5 hotels
-
-    Please respond ONLY with a JSON object in this format:
-
+    From the availability checker results, choose exactly 5 hotels that are:
+      - Available for the full date range
+      - Offering the best price-to-value ratio
+      - In good locations with strong amenities
+      - Well-reviewed by users
+    Provide:
+      - summary: Short paragraph summarizing the top picks
+      - hotels: The selected 5 hotels with the fields {
+          "name": "Hotel Example",
+          "description": "A nice hotel located downtown with free WiFi.",
+          "price_range": "$100-$150 per night",
+          "rating": 4.5,
+          "review_count": 230,
+          "booking_link": "https://example.com/hotel-booking",
+          "reason_for_selection": "Excellent central location and top guest reviews for the price."
+        }
+    Respond ONLY with JSON object:
     {
-      "summary": "A clear paragraph summarizing the best hotel options in {{city}} for {{start_date}} to {{end_date}} for {{people}} people",
+      "summary": "A clear paragraph summarizing the best hotel options in {{city}} for {{start_date}} to {{end_date}} for {{people}} people.",
       "hotels": [
         {
           "name": "Hotel Example",
           "description": "A nice hotel located downtown with free WiFi.",
           "price_range": "$100-$150 per night",
-          "booking_link": "https://example.com/hotel-booking"
+          "rating": 4.5,
+          "review_count": 230,
+          "booking_link": "https://example.com/hotel-booking",
+          "reason_for_selection": "Excellent central location and top guest reviews for the price."
         }
       ]
     }
   expected_output: |
-    A JSON object with a "summary" string and exactly 5 hotels selected from the research results with direct booking link with preselected dates and number of people.
+   Respond ONLY with JSON object:
+    {
+      "summary": "A clear paragraph summarizing the best hotel options in {{city}} for {{start_date}} to {{end_date}} for {{people}} people.",
+      "hotels": [
+        {
+          "name": "Hotel Example",
+          "description": "A nice hotel located downtown with free WiFi.",
+          "price_range": "$100-$150 per night",
+          "rating": 4.5,
+          "review_count": 230,
+          "booking_link": "https://example.com/hotel-booking",
+          "reason_for_selection": "Excellent central location and top guest reviews for the price."
+        }
+      ]
+    }

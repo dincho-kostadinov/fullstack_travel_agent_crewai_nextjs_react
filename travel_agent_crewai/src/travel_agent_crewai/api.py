@@ -54,7 +54,7 @@ async def research(request: ResearchRequest):
 
         return {
             "summary": parsed.get("summary", ""),
-            "hotels": parsed.get("hotels", [])
+            "hotels": parsed.get("hotels", []),
             # "test":crew_output.raw
         }
 

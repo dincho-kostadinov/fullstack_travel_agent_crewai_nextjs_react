@@ -8,50 +8,74 @@ _ = load_dotenv()
 
 llm = LLM(
     model="gemini/gemini-2.0-flash",
-    temperature=0.7,
+    temperature=0.5,
 )
 @CrewBase
 class TravelCrew:
     agents_config = 'config/agents.yaml'
     tasks_config = 'config/tasks.yaml'
-    """Travel Agent Crew."""
+    """Travel Agent Crew with availability checking."""
 
     @agent
-    def travel_agent(self) -> Agent:
+    def travel_research_agent(self) -> Agent:
         return Agent(
-            config=self.agents_config["travel_agent"],
+            config=self.agents_config["travel_research_agent"],
             tools=[SerperDevTool()],
             llm=llm,
             verbose=True,
-       
         )
 
     @agent
-    def reporting_analyst(self) -> Agent:
+    def travel_availability_checker_agent(self) -> Agent:
         return Agent(
-            config=self.agents_config["reporting_analyst"],
+            config=self.agents_config["travel_availability_checker_agent"],
             llm=llm,
             verbose=True,
+        )
+
+    @agent
+    def travel_reporting_agent(self) -> Agent:
+        return Agent(
+            config=self.agents_config["travel_reporting_agent"],
+            llm=llm,
+            verbose=True,
+            reasoning=True,
+            max_reasoning_attempts=2
         )
 
     @task
     def research_task(self) -> Task:
         return Task(
             config=self.tasks_config["research_task"],
-            agent=self.travel_agent(),
+            agent=self.travel_research_agent(),
+        )
+
+    @task
+    def availability_check_task(self) -> Task:
+        return Task(
+            config=self.tasks_config["availability_check_task"],
+            agent=self.travel_availability_checker_agent(),
         )
 
     @task
     def reporting_task(self) -> Task:
         return Task(
             config=self.tasks_config["reporting_task"],
-            agent=self.reporting_analyst(),
+            agent=self.travel_reporting_agent(),
         )
 
     @crew
     def crew(self) -> Crew:
         return Crew(
-            agents=[self.travel_agent(), self.reporting_analyst()],
-            tasks=[self.research_task(), self.reporting_task()],
+            agents=[
+                self.travel_research_agent(),
+                self.travel_availability_checker_agent(),
+                self.travel_reporting_agent()
+            ],
+            tasks=[
+                self.research_task(),
+                self.availability_check_task(),
+                self.reporting_task()
+            ],
             verbose=True,
         )
